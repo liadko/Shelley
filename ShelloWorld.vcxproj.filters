@@ -24,12 +24,12 @@
     <ClCompile Include="Shell.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ShellLogic.cpp">
+    <ClCompile Include="old_ShellLogic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ShellHeader.hpp">
+    <ClInclude Include="old_ShellHeader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Shell.hpp">
