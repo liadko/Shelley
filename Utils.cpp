@@ -38,14 +38,14 @@ string LastPart(const string& path)
 {
 	string new_path = path;
 
-		for (int i = path.size() - 1; i >= 0; i--)
+	for (int i = path.size() - 1; i >= 0; i--)
+	{
+		if (path[i] == '/' || path[i] == '\\')
 		{
-			if (path[i] == '/' || path[i] == '\\')
-			{
-				new_path = path.substr(i + 1, path.size() - 1);
-				break;
-			}
+			new_path = path.substr(i + 1, path.size() - 1);
+			break;
 		}
+	}
 
 	return new_path;
 }
@@ -78,7 +78,7 @@ string TrimString(const string& s)
 		}
 
 	int lastNonWhiteSpaceIndex = s.size() - 1;
-	for (int i = s.size()-1; i >= firstNonWhiteSpaceIndex; i--)
+	for (int i = s.size() - 1; i >= firstNonWhiteSpaceIndex; i--)
 		if (!std::isspace(s[i]))
 		{
 			lastNonWhiteSpaceIndex = i;
@@ -86,4 +86,18 @@ string TrimString(const string& s)
 		}
 
 	return s.substr(firstNonWhiteSpaceIndex, lastNonWhiteSpaceIndex - firstNonWhiteSpaceIndex + 1);
+}
+
+void WriteToFile(const string& path, const string& contents)
+{
+	FILE* file;
+	if (fopen_s(&file, path.c_str(), "w"))
+	{
+		std::cout << "Error Opening File\n";
+		return;
+	}
+
+	fprintf(file, contents.c_str());
+
+	fclose(file);
 }

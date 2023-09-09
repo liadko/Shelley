@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <fstream>
 
 
 using std::string;
@@ -14,3 +15,4 @@ string LastPart(const string&);
 int CountLetter(const string& s, char c);
 int IndexOf(const string& s, char c);
 string TrimString(const string& s);
+void WriteToFile(const string& path, const string& s);

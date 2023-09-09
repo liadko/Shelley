@@ -9,17 +9,16 @@ namespace Shell {
 	/// <returns>False if the program should be terminated</returns>
 	bool MainLoop()
 	{
+		// print prompt
 		cout << current_path.string() << ">";
 
-		//user input
 		string user_input;
 		std::getline(std::cin, user_input);
 
 		if (user_input == "exit" || user_input == "quit")
 			return false;
 
-		// ex: echo liad | a.exe
-		// parse and execute the expression
+		// feed each command into the next
 		string prev_output = "";
 		string expression = user_input;
 		int pipe_location = IndexOf(expression, '|');
@@ -33,15 +32,31 @@ namespace Shell {
 
 			pipe_location = IndexOf(expression, '|');
 		}
-		string output = ExecuteCommand(expression, prev_output); // pipe each output into the command in the next pipe
-		
 
+		// maybe redirect to file
+		string output;
+		int index_of_redirect = IndexOf(expression, '>');
+		if (index_of_redirect >= 0)
+		{
+			string filename = expression.substr(index_of_redirect + 1);
+			fs::path file_to_write = current_path / TrimString(filename);
+			output = ExecuteCommand(expression.substr(0, index_of_redirect), prev_output);
+			
+
+			cout << "Redirecting output to file at " << file_to_write.string() << "\n\n";
+
+			WriteToFile(file_to_write.string(), output);
+
+			return true;
+		}
+
+
+		output = ExecuteCommand(expression, prev_output, 1);
 		cout << output << "\n\n";
-
 
 		return true;
 	}
-	string ExecuteCommand(const string& command__and_args, const string& program_input)
+	string ExecuteCommand(const string& command__and_args, const string& program_input, bool toSTDOUT)
 	{
 		if (command__and_args == "")
 			return "";
@@ -77,26 +92,33 @@ namespace Shell {
 		if (command_lower == "touch")
 			return Touch(args);
 
-		// search current dir
-		for (const auto& entry : fs::directory_iterator(current_path))
-		{
-			if (entry.is_regular_file() && entry.path().filename() == command)
-				return RunProgram(current_path.string() + "/" + command, args, program_input);
-				//return "Executing The File: '" + command + "' with default input: '" + program_input + "'.";
-		}
+		if (command_lower == "type" || command_lower == "cat")
+			return Type(args);
 
-		// search environment variable path
-		for (const auto& entry : fs::directory_iterator(system_path))
+		// search current dir
+		for (int path_version = 0; path_version <= 1; path_version++)
 		{
-			if (entry.is_regular_file() && ToLower(entry.path().filename().string()) == command)
-				return RunProgram(system_path.string() + "/" + command, args, program_input);
-			//return "Executing The File: '" + command + "' with default input: '" + program_input + "'.";
+			if (path_version == 1) // also look for version with .exe on end
+				command += ".exe";
+
+			for (const auto& entry : fs::directory_iterator(current_path))
+			{
+				if (entry.is_regular_file() && entry.path().filename() == command)
+					return RunProgram(current_path.string() + "/" + command, args, program_input, toSTDOUT);
+			}
+
+			// search environment variable path
+			for (const auto& entry : fs::directory_iterator(system_path))
+			{
+				if (entry.is_regular_file() && ToLower(entry.path().filename().string()) == command)
+					return RunProgram(system_path.string() + "/" + command, args, program_input, toSTDOUT);
+			}
 		}
 
 		//unrecognised input
 		return  "Command or File Named '" + command + "' is unrecognised.";
 	}
-	string RunProgram(const string& full_path, const vector<string>& args, const string& input)
+	string RunProgram(const string& full_path, const vector<string>& args, const string& input, bool toSTDOUT)
 	{
 		//cout << "Call to RunProgram: " << full_path << ", " << CombineIntoString(args) << ", " << input << "\n";
 
@@ -105,32 +127,39 @@ namespace Shell {
 		const char* command = command_str.c_str();
 
 		FILE* pipe; // Open a pipe to command
-		if(input == "")
-			pipe = _popen(command, "r");  
+		if (input == "")
+			pipe = _popen(command, "r");
 		else
 			pipe = _popen(command, "w");
-	
+
 		//cout << pipe << "\n";
 
-		if (!pipe) return "Pipe Failed";
-		
-		if(input != "")
+		if (!pipe) return "Pipe Failed.\n";
+
+		if (input != "")
 			fprintf(pipe, "%s", input.c_str());
 
 		string output = "";
 
 		char buffer[100];
 		while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-			output += buffer;
-			//cout << buffer;
+
+			if (toSTDOUT)
+				cout << buffer;
+			else
+				output += buffer;
+
 		}
 
 		//delete command;
 		//delete command_str;
 		_pclose(pipe);
 
+		if (toSTDOUT) //already printed output to screen
+			return "";
+
 		return output;
-			
+
 	}
 	string Echo(const vector<string>& args)
 	{
@@ -213,7 +242,7 @@ namespace Shell {
 			}
 
 			std::error_code ec;
-			if(fs::remove(dir_path, ec))
+			if (fs::remove(dir_path, ec))
 				output += "Removed directory at '" + dir_path.string() + "'.\n";
 			else
 				output += "Remove directory failed, maybe the directory isn't empty.\n";
@@ -224,11 +253,11 @@ namespace Shell {
 	{
 		if (args.size() == 0)
 			return "No arguments were provided.";
-		
+
 		//create directory for each argument
 		string output = "";
 		for (const string& arg : args) {
-			
+
 			fs::path dir_path = arg;
 			if (!dir_path.is_absolute())
 				dir_path = current_path / arg;
@@ -259,5 +288,25 @@ namespace Shell {
 		}
 		ofs.close();
 		return output;
+	}
+	string Type(const vector<string>& args)
+	{
+		string file_path = (current_path / args[0]).string();
+
+		FILE* file;
+		if(fopen_s(&file, file_path.c_str(), "r"))
+			return "Error when trying to open file named: " + args[0] + "\n";
+
+		string output;
+		char buffer[100];
+		while (fgets(buffer, 100, file) != nullptr)
+		{
+			output += buffer;
+		}
+
+		fclose(file);
+
+		return output;
+
 	}
 };

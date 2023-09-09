@@ -14,8 +14,8 @@ using std::cout;
 namespace Shell {
 	bool MainLoop();
 	
-	string RecursiveEvaluateCommand(const string& command, const string& program_input_string="");
-	string ExecuteCommand(const string& command_args_string, const string& program_input_string="");
+	//string RecursiveEvaluateCommand(const string& command, const string& program_input_string="");
+	string ExecuteCommand(const string& command_args_string, const string& program_input_string="", bool toSTDOUT = false);
 
 	string Echo(const vector<string>& args);
 	string Clear();
@@ -24,5 +24,6 @@ namespace Shell {
 	string RmDir(const vector<string>& args);
 	string MkDir(const vector<string>& args);
 	string Touch(vector<string>& args);
-	string RunProgram(const string& full_path, const vector<string>& args, const string& input="");
+	string Type(const vector<string>& args);
+	string RunProgram(const string& full_path, const vector<string>& args, const string& input="", bool toSTDOUT=false);
 };
