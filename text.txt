@@ -1,0 +1,10 @@
+1) C/C++
+2) C#/Java/.NET
+3) Security
+4) Assembly
+5) Networks
+6) OOP
+7) Python
+8) Windows
+9) Unix
+10) Web
