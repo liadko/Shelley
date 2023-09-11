@@ -132,7 +132,6 @@ namespace Shell {
 		else
 			pipe = _popen(command, "w");
 
-		//cout << pipe << "\n";
 
 		if (!pipe) return "Pipe Failed.\n";
 
