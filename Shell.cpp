@@ -6,13 +6,15 @@ namespace Shell {
 	fs::path current_path{ "E:\\Liadi_Google_Drive\\Liad\\Code\\CPP\\ForShelley" };
 	fs::path system_path{ "C:\\Windows\\System32" };
 
+	bool short_prompt = true;
+
 	Dict variables(100);
 
 	/// <returns>False if the program should be terminated</returns>
 	bool MainLoop()
 	{
 		// print prompt
-		cout << current_path.string() << ">";
+		cout << Prompt();
 
 		string user_input;
 		std::getline(std::cin, user_input);
@@ -78,6 +80,12 @@ namespace Shell {
 		return expression;
 
 	}
+	string Prompt()
+	{
+		if(short_prompt)
+			return current_path.root_name().string() + "\\...\\" + current_path.filename().string() + " >";
+		return Pwd() + ">";
+	}
 	string ExecuteCommand(const string& command__and_args, const string& program_input, bool toSTDOUT)
 	{
 		if (command__and_args == "")
@@ -105,6 +113,9 @@ namespace Shell {
 		if (command_lower == "cd")
 			return Cd(args);
 
+		if (command_lower == "pwd")
+			return Pwd();
+
 		if (command_lower == "rmdir")
 			return RmDir(args);
 
@@ -120,28 +131,32 @@ namespace Shell {
 		if (command_lower == "set")
 			return Set(args);
 
-		// search current dir
+		if (command_lower == "changeprompt")
+			return ToggleShortPrompt();
+
+		string path = command;
+		// search directory for matching file, and execute it
 		for (int path_version = 0; path_version <= 1; path_version++)
 		{
 			if (path_version == 1) // also look for version with .exe on end
-				command += ".exe";
+				path += ".exe";
 
 			for (const auto& entry : fs::directory_iterator(current_path))
 			{
-				if (entry.is_regular_file() && entry.path().filename() == command)
-					return RunProgram(current_path.string() + "/" + command, args, program_input, toSTDOUT);
+				if (entry.is_regular_file() && entry.path().filename() == path)
+					return RunProgram(current_path.string() + "/" + path, args, program_input, toSTDOUT);
 			}
 
 			// search environment variable path
 			for (const auto& entry : fs::directory_iterator(system_path))
 			{
-				if (entry.is_regular_file() && ToLower(entry.path().filename().string()) == command)
-					return RunProgram(system_path.string() + "/" + command, args, program_input, toSTDOUT);
+				if (entry.is_regular_file() && ToLower(entry.path().filename().string()) == path)
+					return RunProgram(system_path.string() + "/" + path, args, program_input, toSTDOUT);
 			}
 		}
 
 		//unrecognised input
-		return  "Command or File Named '" + command + "' is unrecognised.";
+		return  "Command or File named '" + command + "' is unrecognised.";
 	}
 	string RunProgram(const string& full_path, const vector<string>& args, const string& input, bool toSTDOUT)
 	{
@@ -206,12 +221,16 @@ namespace Shell {
 		}
 		return directory;
 	}
+	string Pwd()
+	{
+		return current_path.string();
+	}
 	string Cd(const vector<string>& args)
 	{
 		string requested_path = CombineIntoString(args);
 
 		if (requested_path == "")
-			return current_path.string();
+			return Pwd();
 
 		if (requested_path == ".")
 			return "";
@@ -322,7 +341,7 @@ namespace Shell {
 
 		FILE* file;
 		if(fopen_s(&file, file_path.c_str(), "r"))
-			return "Error when trying to open file named: " + args[0] + "\n";
+			return "Can't find readable file named '" + args[0] + "'.\n";
 
 		string output;
 		char buffer[100];
@@ -356,5 +375,10 @@ namespace Shell {
 
 		return "Variable Named $" + key + "$ has value '" + value + "'.";
 
+	}
+	string ToggleShortPrompt()
+	{
+		short_prompt = !short_prompt;
+		return "Prompt type changed.";
 	}
 };
