@@ -6,6 +6,8 @@ namespace Shell {
 	fs::path current_path{ "E:\\Liadi_Google_Drive\\Liad\\Code\\CPP\\ForShelley" };
 	fs::path system_path{ "C:\\Windows\\System32" };
 
+	Dict variables(100);
+
 	/// <returns>False if the program should be terminated</returns>
 	bool MainLoop()
 	{
@@ -20,7 +22,8 @@ namespace Shell {
 
 		// feed each command into the next
 		string prev_output = "";
-		string expression = user_input;
+		string expression = ParseUserInput(user_input);
+
 		int pipe_location = IndexOf(expression, '|');
 		while (pipe_location != -1)
 		{
@@ -36,7 +39,7 @@ namespace Shell {
 		// maybe redirect to file
 		string output;
 		int index_of_redirect = IndexOf(expression, '>');
-		if (index_of_redirect >= 0)
+		if (index_of_redirect > 0)
 		{
 			string filename = expression.substr(index_of_redirect + 1);
 			fs::path file_to_write = current_path / TrimString(filename);
@@ -56,13 +59,32 @@ namespace Shell {
 
 		return true;
 	}
+	//Swap all $KEYS$ with their values
+	string ParseUserInput(const string& user_input)
+	{
+		string expression = "";
+		vector<string> words = SplitString(user_input, '$');
+		for (int i = 0; i < words.size(); i ++)
+		{
+			if (i % 2 == 0)
+				expression += words[i];
+			else if (variables.containsKey(words[i]))
+				expression += variables.getValue(words[i]);
+			else
+				expression += "$" + words[i] + "$";
+
+
+		}
+		return expression;
+
+	}
 	string ExecuteCommand(const string& command__and_args, const string& program_input, bool toSTDOUT)
 	{
 		if (command__and_args == "")
 			return "";
 
 		string stripped_command_args = TrimString(command__and_args);
-		vector<string> command_args_words = SplitString(stripped_command_args);
+		vector<string> command_args_words = SplitString(stripped_command_args, ' ');
 
 		string command = command_args_words[0];
 		string command_lower = ToLower(command);
@@ -94,6 +116,9 @@ namespace Shell {
 
 		if (command_lower == "type" || command_lower == "cat")
 			return Type(args);
+
+		if (command_lower == "set")
+			return Set(args);
 
 		// search current dir
 		for (int path_version = 0; path_version <= 1; path_version++)
@@ -290,6 +315,9 @@ namespace Shell {
 	}
 	string Type(const vector<string>& args)
 	{
+		if(args.size() < 1)
+			return "Not enough arguments.\nExample: type [FILENAME]";
+
 		string file_path = (current_path / args[0]).string();
 
 		FILE* file;
@@ -306,6 +334,27 @@ namespace Shell {
 		fclose(file);
 
 		return output;
+
+	}
+	string Set(vector<string>& args)
+	{
+		if (args.size() < 2)
+			return "Not enough arguments.\nExample: set [VARIABLE_NAME] [VARIABLE VALUE]\nUse: echo $[VARIABLE_NAME]$";
+
+		string key = args[0];
+		args.erase(args.begin());
+		string value = CombineIntoString(args);
+
+		if (CountLetter(key, '$') > 0 || CountLetter(value, '$') > 0)
+			return "Variable or value has '$' in it. that's not allowed.";
+
+		if (variables.containsKey(key))
+			variables.setValue(key, value);
+		else
+			variables.add(key, value);
+
+
+		return "Variable Named $" + key + "$ has value '" + value + "'.";
 
 	}
 };

@@ -139,7 +139,7 @@
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Dict.h" />
+    <ClInclude Include="Dict.hpp" />
     <ClInclude Include="Shell.hpp" />
     <ClInclude Include="old_ShellHeader.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

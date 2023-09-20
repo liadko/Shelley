@@ -8,7 +8,7 @@
 using std::string;
 using std::vector;
 
-vector<string> SplitString(const string& s);
+vector<string> SplitString(const string& s, char splitter);
 string CombineIntoString(const vector<string>& v);
 string ToLower(const string& s);
 string LastPart(const string&);

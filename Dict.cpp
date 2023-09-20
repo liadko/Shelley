@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Dict.h"
+#include "Dict.hpp"
 
 int Dict::hash(string key)
 {
@@ -46,6 +46,24 @@ string Dict::getValue(string key) const
 		current = current->next;
 	}
 	return "\0";
+}
+
+//returns true on success
+bool Dict::setValue(string key, string value)
+{
+	int index = hash(key) % size;
+	Node* current = data[index];
+	while (current)
+	{
+		if (data[index]->key == key)
+		{
+			data[index]->value = value;
+			return true;
+		}
+
+		current = current->next;
+	}
+	return false;
 }
 
 void Dict::add(string key, string value)

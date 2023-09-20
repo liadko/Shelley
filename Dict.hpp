@@ -24,6 +24,7 @@ public:
 	Dict(int size);
 	bool containsKey(string key) const;
 	string getValue(string key) const;
+	bool setValue(string key, string value);
 	void add(string key, string value);
 	void reset();
 };

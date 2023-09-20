@@ -41,7 +41,7 @@
     <ClInclude Include="Utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dict.h">
+    <ClInclude Include="Dict.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

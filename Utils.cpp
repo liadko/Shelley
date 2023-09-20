@@ -1,13 +1,13 @@
 #include "Utils.hpp"
 
 
-vector<string> SplitString(const string& s)
+vector<string> SplitString(const string& s, char splitter)
 {
 	std::stringstream ss(s);
 	vector<string> words;
 
 	string word;
-	while (ss >> word)
+	while (std::getline(ss, word, splitter))
 		words.push_back(word);
 
 	return words;
